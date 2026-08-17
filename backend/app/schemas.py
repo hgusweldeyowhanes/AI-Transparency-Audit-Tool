@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class EventIn(BaseModel):
@@ -49,8 +49,7 @@ class EventOut(BaseModel):
     failure_flags: List[str]
     quality_score: float
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EventListOut(BaseModel):

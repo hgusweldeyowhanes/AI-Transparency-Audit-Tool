@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import time
 import uuid
-from typing import Any, Dict, List, Optional
 
 import httpx
 
@@ -23,7 +22,7 @@ class AuditSpan:
         if self._t0 is not None and "latency_ms" not in self.fields:
             self.fields["latency_ms"] = int((time.time() - self._t0) * 1000)
         if exc is not None and not self.fields.get("completion"):
-            self.fields["completion"] = "ERROR: " + type(exc).__name__ + ": " + str(exc)
+            self.fields["completion"] = "ERROR: {}: {}".format(type(exc).__name__, exc)
         if self.fields.get("prompt") is not None:
             self._client.log_event(**self.fields)
         return False
@@ -41,56 +40,33 @@ class AuditClient:
     def close(self):
         self._http.close()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.close()
+
     def _headers(self):
         return {"X-API-Key": self.api_key, "Content-Type": "application/json"}
 
-    def log_event(
-        self,
-        model,
-        prompt,
-        completion="",
-        provider=None,
-        system_prompt=None,
-        prompt_tokens=0,
-        completion_tokens=0,
-        cost_usd=None,
-        latency_ms=0,
-        prompt_version=None,
-        user_id=None,
-        session_id=None,
-        tags=None,
-        metadata=None,
-        trace_id=None,
-    ):
-        body = {
-            "model": model,
-            "prompt": prompt,
-            "completion": completion,
-            "provider": provider,
-            "system_prompt": system_prompt,
-            "prompt_tokens": prompt_tokens,
-            "completion_tokens": completion_tokens,
-            "cost_usd": cost_usd,
-            "latency_ms": latency_ms,
-            "prompt_version": prompt_version,
-            "user_id": user_id,
-            "session_id": session_id,
-            "tags": tags or [],
-            "metadata": metadata or {},
-            "trace_id": trace_id,
-        }
-        r = self._http.post(self.base_url + "/v1/events", json=body, headers=self._headers())
-        r.raise_for_status()
-        return r.json()
+    def log_event(self, model, prompt, **fields):
+        body = {key: value for key, value in fields.items() if value is not None}
+        body["model"] = model
+        body["prompt"] = prompt
+        body.setdefault("tags", [])
+        body.setdefault("metadata", {})
+        response = self._http.post(self.base_url + "/v1/events", json=body, headers=self._headers())
+        response.raise_for_status()
+        return response.json()
 
     def log_batch(self, events):
-        r = self._http.post(
+        response = self._http.post(
             self.base_url + "/v1/events/batch",
             json={"events": events},
             headers=self._headers(),
         )
-        r.raise_for_status()
-        return r.json()
+        response.raise_for_status()
+        return response.json()
 
     def trace(self, **kwargs):
         return AuditSpan(self, **kwargs)
@@ -103,6 +79,6 @@ class AuditClient:
             params["model"] = model
         if flag:
             params["flag"] = flag
-        r = self._http.get(self.base_url + "/v1/events", params=params, headers=self._headers())
-        r.raise_for_status()
-        return r.json()
+        response = self._http.get(self.base_url + "/v1/events", params=params, headers=self._headers())
+        response.raise_for_status()
+        return response.json()

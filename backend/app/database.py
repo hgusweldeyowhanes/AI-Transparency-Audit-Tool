@@ -1,15 +1,22 @@
 import os
+from pathlib import Path
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from .config import settings
 
-db_path = settings.database_url.replace("sqlite:///", "")
-if db_path.startswith("./"):
-    os.makedirs(os.path.dirname(os.path.abspath(db_path)) or ".", exist_ok=True)
-    parent = os.path.dirname(os.path.abspath(db_path))
-    if parent:
-        os.makedirs(parent, exist_ok=True)
+
+def _ensure_sqlite_dir(url):
+    if not url.startswith("sqlite:///"):
+        return
+    raw = url.replace("sqlite:///", "", 1)
+    path = Path(raw)
+    if path.parent and str(path.parent) not in (".", ""):
+        os.makedirs(path.parent, exist_ok=True)
+
+
+_ensure_sqlite_dir(settings.database_url)
 
 connect_args = {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
 engine = create_engine(settings.database_url, connect_args=connect_args, future=True)
