@@ -1,0 +1,58 @@
+export const posts = [
+  {
+    slug: "regulatory-crisis",
+    title: "The regulatory crisis in AI: why audit trails matter",
+    kicker: "Governance",
+    date: "2026-03-12",
+    keywords: ["AI audit", "LLM compliance", "AI governance"],
+    excerpt: "EU AI Act logging duties and SEC-style disclosure pressure collide with opaque LLM stacks. Here is what an audit trail actually has to capture.",
+    body: [
+      "If you cannot reconstruct why a model said what it said, you cannot prove to a regulator that the system is under control. That is the entire problem.",
+      "The EU AI Act treats record-keeping as a first-class duty for high-risk systems: timestamps, inputs, outputs, and the identity of the model that produced them. US financial supervisors, meanwhile, expect firms to explain how AI is used in customer-facing and risk processes — not with a slide, with evidence.",
+      "Most LLM stacks fail this test. A typical production path is an SDK call, a log line with a request id, and a hope that someone grepped CloudWatch before the 14-day retention window closed. That is not an audit trail. It is a souvenir.",
+      "audit-ai stores every decision as a structured event: prompt, completion, model, tokens, cost, prompt version, and heuristic failure flags. Retention is explicit (30 days on the free self-hosted tier; longer on paid). Search is the product, not an afterthought.",
+      "This is not legal advice and it is not a certificate of conformity. It is the engineering substrate those conversations require: a ledger you can hand to compliance without a 200-hour archaeology project.",
+    ],
+  },
+  {
+    slug: "drift-detection",
+    title: "Debugging production LLMs: a guide to drift detection",
+    kicker: "Engineering",
+    date: "2026-04-02",
+    keywords: ["LLM drift", "hallucination monitoring"],
+    excerpt: "Quality does not fall off a cliff. It slides — usually after a prompt tweak nobody logged. Drift detection is how you notice in hours instead of quarters.",
+    body: [
+      "Hallucinations, knowledge gaps, and quiet refusals rarely announce themselves as 500s. They look like slightly worse summaries, a new policy number that does not exist, a hedging paragraph where yesterday you got a crisp next step.",
+      "The failure mode we see most often: a prompt version ships on a Thursday. By the following Wednesday, factual-error rate is up a couple of points. Nobody correlates it with the change because the change is a string in a YAML file, not a field on the event.",
+      "audit-ai compares the last 7 days to the prior 7 on failure rate, latency, cost, and output length, and charts daily factual-error rate. The seeded demo replays a real pattern: prompt v2 gets aggressive, ungrounded citations spike, rollback restores the baseline.",
+      "That is the $500K bug in the case study, compressed. Catching it in two hours is not magic. It is having prompt_version on every row and a detector that flags citations that never appeared in the prompt.",
+    ],
+  },
+  {
+    slug: "claude-vs-gpt4",
+    title: "Claude vs. GPT-4: how to compare LLMs objectively",
+    kicker: "Evaluation",
+    date: "2026-04-18",
+    keywords: ["model comparison", "LLM cost quality"],
+    excerpt: "Cost-per-token is not a strategy. Compare models on the traffic you actually run: quality, failure mix, latency, and dollars per accepted completion.",
+    body: [
+      "Vendor leaderboards optimize for exams. Your production mix is ticket summaries, RAG answers, and the odd classification. The fair comparison is the same prompts, the same week, the same failure taxonomy.",
+      "audit-ai's compare view ranks models by cost per unit of quality (average cost divided by average quality score) alongside failure rate and latency. Llama often wins on cost. Claude and GPT-4o trade blows on quality depending on the task.",
+      "The methodology is deliberately boring: log every call, score with the same heuristic detectors, do not cherry-pick traces. When you promote a model, you should be able to point at a table, not a vibe.",
+      "Use the dashboard Compare page on the seeded demo to see this on ~500 support-summarization events across gpt-4o, claude-3-5-sonnet, and llama-3.1-70b.",
+    ],
+  },
+  {
+    slug: "failure-analysis",
+    title: "Failure analysis: the untold story of LLM errors",
+    kicker: "Reliability",
+    date: "2026-05-09",
+    keywords: ["LLM failures", "hallucination taxonomy"],
+    excerpt: "Empty, refusal, knowledge gap, ungrounded citation, PII leak — cluster them or you will debug the same incident forever.",
+    body: [
+      "A hallucination is not one thing. An empty completion is an availability problem. A refusal on a legitimate ticket is a policy-over-trigger problem. A citation to policy #4472 that never existed is a faithfulness problem. Treating them as one 'quality' KPI hides the fix.",
+      "audit-ai tags events with a small, boring taxonomy and clusters similar completions (flag + normalized prefix). Operators get a queue: this cluster is v2 inventing policy IDs; that cluster is Llama hitting knowledge-cutoff language on fee questions.",
+      "Mitigations follow the cluster, not the vibe: ground the prompt, restore v1, strip PII from tools, raise the empty-output alarm. The goal is not a perfect judge model on day one. It is a shared language for failures so compliance and engineering can look at the same rows.",
+    ],
+  },
+];
