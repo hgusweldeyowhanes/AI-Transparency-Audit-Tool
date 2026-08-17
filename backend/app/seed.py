@@ -8,13 +8,15 @@ from __future__ import annotations
 
 import random
 import uuid
-from datetime import datetime, timedelta
+from datetime import timedelta
+
 from sqlalchemy.orm import Session
 
+from .clock import utc_now
 from .models import AuditEvent
+from .repositories import EventStore
 from .services.cost import estimate_cost, infer_provider
 from .services.detectors import detect_flags
-from .services.ingest import dumps
 
 TICKETS = [
     (
@@ -91,12 +93,12 @@ def _pick_model(rng):
 
 
 def seed_if_empty(db: Session, n=520):
-    existing = db.query(AuditEvent).count()
+    existing = EventStore(db).count()
     if existing:
         return existing
 
     rng = random.Random(42)
-    now = datetime.utcnow()
+    now = utc_now()
     system = (
         "You summarize bank customer-support tickets for an internal ops console. "
         "Stay faithful to the ticket. Never invent policy IDs."
@@ -183,9 +185,9 @@ def seed_if_empty(db: Session, n=520):
             prompt_version=prompt_version,
             user_id="agent-" + str(rng.randint(1, 24)),
             session_id="sess-" + str(rng.randint(1000, 9999)),
-            tags=dumps(["customer-support", "summarization"]),
-            extra_metadata=dumps({"channel": "ops-console", "seeded": True}),
-            failure_flags=dumps(flags),
+            tags=["customer-support", "summarization"],
+            extra_metadata={"channel": "ops-console", "seeded": True},
+            failure_flags=flags,
             quality_score=score,
         )
         db.add(row)

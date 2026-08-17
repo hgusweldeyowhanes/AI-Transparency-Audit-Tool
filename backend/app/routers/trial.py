@@ -1,9 +1,9 @@
 import uuid
-from datetime import datetime
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from ..clock import utc_now
 from ..config import settings
 from ..database import get_db
 from ..models import TrialLead
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/v1/trial", tags=["trial"])
 def start_trial(payload: TrialIn, db: Session = Depends(get_db)):
     lead = TrialLead(
         id=str(uuid.uuid4()),
-        created_at=datetime.utcnow(),
+        created_at=utc_now(),
         email=payload.email,
         company=payload.company,
         use_case=payload.use_case,

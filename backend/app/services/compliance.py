@@ -1,58 +1,34 @@
 from collections import defaultdict
-from datetime import datetime, timedelta
 from html import escape
-from typing import Any, Dict, List
 
-from sqlalchemy.orm import Session
-
+from ..clock import iso_z, utc_now
 from ..config import settings
-from ..models import AuditEvent
-from .ingest import loads_list
+from ..repositories import EventStore
+from .analytics import model_rows
 
 
-def _inventory(db: Session):
-    rows = db.query(AuditEvent).all()
-    models = defaultdict(lambda: {"events": 0, "failed": 0, "first": None, "last": None, "provider": ""})
-    flags = defaultdict(int)
+def inventory(db):
+    rows = EventStore(db).all()
+    flag_counts = defaultdict(int)
     oldest = newest = None
-    for r in rows:
-        if oldest is None or r.timestamp < oldest:
-            oldest = r.timestamp
-        if newest is None or r.timestamp > newest:
-            newest = r.timestamp
-        m = models[r.model]
-        m["events"] += 1
-        m["provider"] = r.provider
-        m["last"] = r.timestamp.isoformat() + "Z"
-        if m["first"] is None:
-            m["first"] = r.timestamp.isoformat() + "Z"
-        f = loads_list(r.failure_flags)
-        if f:
-            m["failed"] += 1
-        for flag in f:
-            flags[flag] += 1
+    for row in rows:
+        if oldest is None or row.timestamp < oldest:
+            oldest = row.timestamp
+        if newest is None or row.timestamp > newest:
+            newest = row.timestamp
+        for flag in row.flags:
+            flag_counts[flag] += 1
     return {
         "event_count": len(rows),
-        "models": [
-            {
-                "model": name,
-                "provider": data["provider"],
-                "events": data["events"],
-                "failure_rate": round(data["failed"] / float(data["events"]), 4) if data["events"] else 0,
-                "first_seen": data["first"],
-                "last_seen": data["last"],
-            }
-            for name, data in sorted(models.items())
-        ],
-        "failure_counts": dict(flags),
-        "oldest_event": oldest.isoformat() + "Z" if oldest else None,
-        "newest_event": newest.isoformat() + "Z" if newest else None,
+        "models": model_rows(rows),
+        "failure_counts": dict(flag_counts),
+        "oldest_event": iso_z(oldest),
+        "newest_event": iso_z(newest),
         "retention_days": settings.retention_days,
     }
 
 
-def eu_ai_act_payload(db: Session):
-    inv = _inventory(db)
+def eu_ai_act_payload(db):
     return {
         "title": "EU AI Act logging pack (template)",
         "disclaimer": (
@@ -60,7 +36,7 @@ def eu_ai_act_payload(db: Session):
             "(notably logging / traceability for high-risk systems). It is not legal advice "
             "and does not certify conformity."
         ),
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": iso_z(utc_now()),
         "articles_referenced": [
             {
                 "ref": "Art. 12 — Record-keeping",
@@ -75,7 +51,7 @@ def eu_ai_act_payload(db: Session):
                 "how_we_help": "Search + incident detection so a human can inspect and roll back a prompt version.",
             },
         ],
-        "inventory": inv,
+        "inventory": inventory(db),
         "retention_policy": {
             "stated_days": settings.retention_days,
             "note": "Free self-hosted default is 30 days (GTM free tier). Raise this for regulated workloads.",
@@ -83,15 +59,14 @@ def eu_ai_act_payload(db: Session):
     }
 
 
-def sec_payload(db: Session):
-    inv = _inventory(db)
+def sec_payload(db):
     return {
         "title": "SEC AI disclosure pack (template)",
         "disclaimer": (
             "Template for internal evidence rooms preparing AI-related disclosures. "
             "Not a filing, not legal advice, and not an SEC form."
         ),
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": iso_z(utc_now()),
         "sections": [
             {
                 "heading": "System inventory",
@@ -106,11 +81,12 @@ def sec_payload(db: Session):
                 "body": "prompt_version is logged on every event so a regression can be tied to a specific change.",
             },
         ],
-        "inventory": inv,
+        "inventory": inventory(db),
     }
 
 
 def render_html(title, disclaimer, payload):
+    models = payload.get("inventory", {}).get("models", [])
     models_rows = "".join(
         "<tr><td>{}</td><td>{}</td><td>{}</td><td>{:.1%}</td></tr>".format(
             escape(m["model"]),
@@ -118,7 +94,7 @@ def render_html(title, disclaimer, payload):
             m["events"],
             m["failure_rate"],
         )
-        for m in payload.get("inventory", {}).get("models", [])
+        for m in models
     )
     flags = payload.get("inventory", {}).get("failure_counts", {})
     flag_rows = "".join(
