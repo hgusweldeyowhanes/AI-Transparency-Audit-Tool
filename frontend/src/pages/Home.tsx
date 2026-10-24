@@ -51,6 +51,12 @@ export default function Home() {
             <h3>Compliance packs</h3>
             <p className="muted">EU AI Act logging templates and SEC-style evidence rooms. Engineering artifacts, not legal advice.</p>
           </article>
+          <article className="card">
+            <h3>Human oversight</h3>
+            <p className="muted">
+              A named person confirms, dismisses, or escalates every flagged decision. That log is what Art. 14 asks you to show.
+            </p>
+          </article>
         </div>
       </section>
 

@@ -14,6 +14,7 @@ import EventDetail from "./pages/app/EventDetail";
 import DriftPage from "./pages/app/Drift";
 import FailuresPage from "./pages/app/Failures";
 import ComparePage from "./pages/app/Compare";
+import OversightPage from "./pages/app/Oversight";
 import ReportsPage from "./pages/app/Reports";
 
 export default function App() {
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="events/:id" element={<EventDetail />} />
         <Route path="drift" element={<DriftPage />} />
         <Route path="failures" element={<FailuresPage />} />
+        <Route path="oversight" element={<OversightPage />} />
         <Route path="compare" element={<ComparePage />} />
         <Route path="reports" element={<ReportsPage />} />
       </Route>

@@ -63,6 +63,12 @@ with client.trace(model="gpt-4o", prompt=user_msg, tags=["support"]) as span:
           <span className="mono">GET /v1/failures</span> — taxonomy + clusters
         </li>
         <li>
+          <span className="mono">GET /v1/oversight</span> — human review queue for flagged events
+        </li>
+        <li>
+          <span className="mono">POST /v1/oversight</span> — record a decision (confirm, false positive, escalate, or clear)
+        </li>
+        <li>
           <span className="mono">GET /v1/compare</span> — cost vs quality by model
         </li>
         <li>
@@ -79,7 +85,7 @@ with client.trace(model="gpt-4o", prompt=user_msg, tags=["support"]) as span:
       <h2>Compliance guides</h2>
       <p>
         <strong>EU AI Act.</strong> Treat the HTML pack as an Art. 12 / 13 / 14 mapping aid: what you logged, which
-        models ran, failure flags, retention. It does not certify a high-risk system.
+        models ran, failure flags, human decisions on those flags, and retention. It does not certify a high-risk system.
       </p>
       <p>
         <strong>HIPAA.</strong> Self-host inside your boundary. Do not send ePHI to a managed cloud you have not BAAd.

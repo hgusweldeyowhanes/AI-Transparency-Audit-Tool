@@ -51,6 +51,9 @@ export default function FailuresPage() {
                 ))}
               </tbody>
             </table>
+            <p style={{ marginTop: 18 }}>
+              <Link to="/app/oversight">Review these in the oversight queue →</Link>
+            </p>
           </>
         )}
       </PageState>

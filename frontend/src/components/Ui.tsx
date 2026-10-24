@@ -32,6 +32,11 @@ export function Flags({ flags }: { flags: string[] }) {
   );
 }
 
+export function Decision({ decision }: { decision: ReviewDecision | string }) {
+  const label = decision in DECISION_LABEL ? DECISION_LABEL[decision as ReviewDecision] : decision;
+  return <span className={`decision ${decision}`}>{label}</span>;
+}
+
 export function PageState({
   error,
   loading,

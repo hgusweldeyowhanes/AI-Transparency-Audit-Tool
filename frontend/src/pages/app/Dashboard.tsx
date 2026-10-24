@@ -7,6 +7,7 @@ import { useApi } from "../../hooks/useApi";
 
 export default function Dashboard() {
   const { data, error, loading } = useApi(() => api.metrics(30), []);
+  const oversight = useApi(() => api.oversight({ status: "pending", limit: 1 }), []);
 
   return (
     <div>
@@ -21,6 +22,15 @@ export default function Dashboard() {
               <MetricCard label="Spend" value={usd(data.total_cost_usd)} />
               <MetricCard label="Avg latency" value={`${Math.round(data.avg_latency_ms)}ms`} />
               <MetricCard label="Avg quality" value={data.avg_quality.toFixed(2)} />
+              <MetricCard
+                label="Oversight"
+                value={oversight.data ? pct(oversight.data.stats.coverage) : "—"}
+                hint={
+                  <Link to="/app/oversight">
+                    {oversight.data ? `${oversight.data.stats.pending} flagged waiting` : "Human review queue"}
+                  </Link>
+                }
+              />
             </div>
             <div className="grid-2" style={{ marginTop: 22 }}>
               <article className="card">
@@ -33,6 +43,8 @@ export default function Dashboard() {
               </article>
             </div>
             <p style={{ marginTop: 22 }}>
+              <Link to="/app/oversight">Review flagged decisions →</Link>
+              <span className="muted"> · </span>
               <Link to="/app/drift">Inspect drift incidents →</Link>
             </p>
           </>

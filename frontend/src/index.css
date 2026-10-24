@@ -164,6 +164,24 @@ table.data th { color: var(--muted); font-weight: 500; }
   margin-right: 4px;
 }
 .ok-pill { background: var(--teal-dim); color: var(--teal); }
+.decision {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.decision.confirmed { background: rgba(251, 113, 133, 0.12); color: var(--rose); }
+.decision.false_positive, .decision.cleared { background: var(--teal-dim); color: var(--teal); }
+.decision.escalated { background: rgba(232, 196, 104, 0.16); color: var(--gold); }
+.btn-sm { padding: 7px 12px; font-size: 13px; }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.review-card { display: grid; gap: 12px; margin-top: 14px; }
+.review-note { width: 100%; min-height: 64px; resize: vertical; }
+.queue-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.snippet { color: var(--muted); font-size: 14px; margin: 0; }
+.snippet strong { color: var(--text); font-weight: 500; }
 
 .filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
 input, select, textarea {

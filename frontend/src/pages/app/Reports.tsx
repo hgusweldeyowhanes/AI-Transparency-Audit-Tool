@@ -31,6 +31,12 @@ export default function ReportsPage() {
             <p>
               Events: {data.inventory.event_count} · Retention: {data.inventory.retention_days} days
             </p>
+            {data.human_oversight && (
+              <p>
+                Human oversight: {data.human_oversight.reviewed} of {data.human_oversight.flagged_events} flagged
+                events reviewed ({pct(data.human_oversight.coverage)}).
+              </p>
+            )}
             <table className="data">
               <thead>
                 <tr>
