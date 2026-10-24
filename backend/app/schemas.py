@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class EventIn(BaseModel):
@@ -67,3 +67,70 @@ class TrialOut(BaseModel):
     api_key: str
     message: str
     dashboard_path: str = "/app"
+
+
+DECISIONS = ("confirmed", "false_positive", "escalated", "cleared")
+
+
+class ReviewIn(BaseModel):
+    event_id: str = Field(min_length=1, max_length=36)
+    reviewer: str = Field(min_length=1, max_length=80)
+    decision: str
+    note: str = Field(default="", max_length=2000)
+
+    @field_validator("reviewer", "note")
+    @classmethod
+    def strip_text(cls, value):
+        return value.strip()
+
+    @field_validator("reviewer")
+    @classmethod
+    def reviewer_present(cls, value):
+        if not value:
+            raise ValueError("reviewer is required")
+        return value
+
+    @field_validator("decision")
+    @classmethod
+    def known_decision(cls, value):
+        if value not in DECISIONS:
+            raise ValueError("decision must be confirmed, false_positive, escalated, or cleared")
+        return value
+
+
+class ReviewOut(BaseModel):
+    id: str
+    event_id: str
+    created_at: datetime
+    reviewer: str
+    decision: str
+    note: str
+
+
+class OversightStats(BaseModel):
+    flagged_events: int
+    reviewed: int
+    pending: int
+    coverage: float
+    confirmed: int
+    false_positive: int
+    escalated: int
+    cleared: int
+
+
+class QueueItem(BaseModel):
+    id: str
+    timestamp: datetime
+    model: str
+    prompt_version: Optional[str] = None
+    failure_flags: List[str]
+    quality_score: float
+    prompt: str
+    completion: str
+    review: Optional[ReviewOut] = None
+
+
+class OversightOut(BaseModel):
+    stats: OversightStats
+    queue: List[QueueItem]
+    recent: List[ReviewOut]

@@ -59,6 +59,27 @@ class AuditEvent(Base):
         }
 
 
+class OversightReview(Base):
+    __tablename__ = "oversight_reviews"
+
+    id = Column(String(36), primary_key=True)
+    event_id = Column(String(36), index=True, nullable=False)
+    created_at = Column(DateTime, index=True, nullable=False)
+    reviewer = Column(String(80), nullable=False)
+    decision = Column(String(32), nullable=False)
+    note = Column(Text, nullable=False, default="")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "event_id": self.event_id,
+            "created_at": self.created_at,
+            "reviewer": self.reviewer,
+            "decision": self.decision,
+            "note": self.note or "",
+        }
+
+
 class TrialLead(Base):
     __tablename__ = "trial_leads"
 

@@ -1,4 +1,14 @@
-import type { AuditEvent, DriftResponse, FailuresResponse, MetricsResponse, ModelRow, ReportResponse } from "./types";
+import type {
+  AuditEvent,
+  DriftResponse,
+  FailuresResponse,
+  MetricsResponse,
+  ModelRow,
+  OversightResponse,
+  OversightReview,
+  ReportResponse,
+  ReviewDecision,
+} from "./types";
 
 export const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -42,6 +52,11 @@ export const api = {
   drift: () => request<DriftResponse>("/v1/drift"),
   failures: () => request<FailuresResponse>("/v1/failures"),
   compare: (days = 30) => request<{ days: number; models: ModelRow[] }>(`/v1/compare?days=${days}`),
+  oversight: (params: { status?: string; limit?: number } = {}) =>
+    request<OversightResponse>(`/v1/oversight${query(params)}`),
+  eventReviews: (eventId: string) => request<OversightReview[]>(`/v1/oversight/events/${eventId}`),
+  review: (body: { event_id: string; reviewer: string; decision: ReviewDecision; note?: string }) =>
+    request<OversightReview>("/v1/oversight", { method: "POST", body: JSON.stringify(body) }),
   report: (kind: "eu-ai-act" | "sec") => request<ReportResponse>(`/v1/reports/${kind}?format=json`),
   trial: (body: { email: string; company?: string; use_case?: string }) =>
     request<{ api_key: string; message: string }>("/v1/trial", {

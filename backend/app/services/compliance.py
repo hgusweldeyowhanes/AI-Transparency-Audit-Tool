@@ -5,6 +5,7 @@ from ..clock import iso_z, utc_now
 from ..config import settings
 from ..repositories import EventStore
 from .analytics import model_rows
+from .oversight import oversight_article, oversight_summary
 
 
 def inventory(db):
@@ -29,6 +30,7 @@ def inventory(db):
 
 
 def eu_ai_act_payload(db):
+    oversight = oversight_summary(db)
     return {
         "title": "EU AI Act logging pack (template)",
         "disclaimer": (
@@ -37,6 +39,7 @@ def eu_ai_act_payload(db):
             "and does not certify conformity."
         ),
         "generated_at": iso_z(utc_now()),
+        "human_oversight": oversight,
         "articles_referenced": [
             {
                 "ref": "Art. 12 — Record-keeping",
@@ -48,7 +51,7 @@ def eu_ai_act_payload(db):
             },
             {
                 "ref": "Art. 14 — Human oversight",
-                "how_we_help": "Search + incident detection so a human can inspect and roll back a prompt version.",
+                "how_we_help": oversight_article(oversight),
             },
         ],
         "inventory": inventory(db),
@@ -60,6 +63,7 @@ def eu_ai_act_payload(db):
 
 
 def sec_payload(db):
+    oversight = oversight_summary(db)
     return {
         "title": "SEC AI disclosure pack (template)",
         "disclaimer": (
@@ -67,6 +71,7 @@ def sec_payload(db):
             "Not a filing, not legal advice, and not an SEC form."
         ),
         "generated_at": iso_z(utc_now()),
+        "human_oversight": oversight,
         "sections": [
             {
                 "heading": "System inventory",
@@ -75,6 +80,10 @@ def sec_payload(db):
             {
                 "heading": "Quality monitoring",
                 "body": "Heuristic detectors for empty output, refusals, ungrounded citations, and PII-like strings.",
+            },
+            {
+                "heading": "Human oversight",
+                "body": oversight_article(oversight),
             },
             {
                 "heading": "Change control",
@@ -109,6 +118,23 @@ def render_html(title, disclaimer, payload):
         for a in articles
     )
     inv = payload.get("inventory", {})
+    oversight = payload.get("human_oversight") or {}
+    if oversight:
+        oversight_html = (
+            "<h2>Human oversight</h2><p>{reviewed} of {flagged} flagged events reviewed "
+            "({coverage:.0%} coverage). Confirmed {confirmed}, false positives {false_positive}, "
+            "escalated {escalated}, cleared {cleared}.</p>"
+        ).format(
+            reviewed=oversight.get("reviewed", 0),
+            flagged=oversight.get("flagged_events", 0),
+            coverage=oversight.get("coverage") or 0,
+            confirmed=oversight.get("confirmed", 0),
+            false_positive=oversight.get("false_positive", 0),
+            escalated=oversight.get("escalated", 0),
+            cleared=oversight.get("cleared", 0),
+        )
+    else:
+        oversight_html = ""
     return """<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"/>
 <title>{title}</title>
@@ -126,6 +152,7 @@ def render_html(title, disclaimer, payload):
   <h1>{title}</h1>
   <p class="disc">{disclaimer}</p>
   <p>Generated {generated}. Events: {events}. Retention: {retention} days.</p>
+  {oversight}
   <h2>Mapped controls</h2>
   <ul>{articles}</ul>
   <h2>Model inventory</h2>
@@ -141,6 +168,7 @@ def render_html(title, disclaimer, payload):
         generated=escape(payload.get("generated_at") or ""),
         events=inv.get("event_count", 0),
         retention=inv.get("retention_days", settings.retention_days),
+        oversight=oversight_html,
         articles=art_html,
         models=models_rows or "<tr><td colspan=4>No events</td></tr>",
         flags=flag_rows or "<tr><td colspan=2>None</td></tr>",

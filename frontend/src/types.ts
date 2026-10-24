@@ -77,10 +77,58 @@ export type FailuresResponse = {
   clusters: { flag: string; count: number; sample: string; event_ids: string[] }[];
 };
 
+export type ReviewDecision = "confirmed" | "false_positive" | "escalated" | "cleared";
+
+export type OversightReview = {
+  id: string;
+  event_id: string;
+  created_at: string;
+  reviewer: string;
+  decision: ReviewDecision;
+  note: string;
+};
+
+export type OversightStats = {
+  flagged_events: number;
+  reviewed: number;
+  pending: number;
+  coverage: number;
+  confirmed: number;
+  false_positive: number;
+  escalated: number;
+  cleared: number;
+};
+
+export type OversightQueueItem = {
+  id: string;
+  timestamp: string;
+  model: string;
+  prompt_version?: string | null;
+  failure_flags: string[];
+  quality_score: number;
+  prompt: string;
+  completion: string;
+  review: OversightReview | null;
+};
+
+export type OversightResponse = {
+  stats: OversightStats;
+  queue: OversightQueueItem[];
+  recent: OversightReview[];
+};
+
+export const DECISION_LABEL: Record<ReviewDecision, string> = {
+  confirmed: "Confirmed failure",
+  false_positive: "False positive",
+  escalated: "Escalated",
+  cleared: "Cleared",
+};
+
 export type ReportResponse = {
   title: string;
   disclaimer: string;
   generated_at: string;
+  human_oversight?: OversightStats;
   inventory: {
     event_count: number;
     retention_days: number;
