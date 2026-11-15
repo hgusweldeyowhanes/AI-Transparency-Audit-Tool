@@ -25,12 +25,18 @@ export default function EventDetail() {
               <MetricCard label="Latency" value={`${ev.latency_ms}ms`} />
               <MetricCard label="Cost" value={usd(ev.cost_usd, 4)} />
               <MetricCard label="Quality" value={ev.quality_score.toFixed(2)} />
+              <MetricCard
+                label="Groundedness"
+                value={ev.groundedness_score != null ? ev.groundedness_score.toFixed(2) : "—"}
+              />
             </div>
             <p>
               <Flags flags={ev.failure_flags} />
               <span className="muted">
                 {" "}
                 · prompt {ev.prompt_version} · {ev.provider}
+                {ev.judge_rubric_version ? ` · rubric ${ev.judge_rubric_version}` : ""}
+                {ev.purged_at ? " · redacted" : ""}
               </span>
             </p>
             <div className="grid-2">
@@ -43,6 +49,20 @@ export default function EventDetail() {
                 <pre className="block">{ev.completion || "(empty)"}</pre>
               </article>
             </div>
+            {(ev.event_hash || ev.judge_scores) && (
+              <article className="card" style={{ marginTop: 18 }}>
+                <h3>Evidence</h3>
+                {ev.event_hash && (
+                  <p className="muted">
+                    chain #{ev.chain_index} · hash {ev.event_hash.slice(0, 20)}… · prev{" "}
+                    {(ev.prev_hash || "").slice(0, 12)}…
+                  </p>
+                )}
+                {ev.judge_scores && Object.keys(ev.judge_scores).length > 0 && (
+                  <pre className="block">{JSON.stringify(ev.judge_scores, null, 2)}</pre>
+                )}
+              </article>
+            )}
             <article className="card" style={{ marginTop: 18 }}>
               <h3>Human oversight</h3>
               <label>

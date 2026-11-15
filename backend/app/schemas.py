@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional  # Any used by sources + judge_scores
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -22,6 +22,10 @@ class EventIn(BaseModel):
     session_id: Optional[str] = None
     tags: List[str] = Field(default_factory=list)
     metadata: Dict[str, Any] = Field(default_factory=dict)
+    sources: List[Any] = Field(
+        default_factory=list,
+        description="Retrieved context snippets for groundedness checks",
+    )
 
 
 class EventBatchIn(BaseModel):
@@ -48,6 +52,13 @@ class EventOut(BaseModel):
     metadata: Dict[str, Any]
     failure_flags: List[str]
     quality_score: float
+    judge_rubric_version: Optional[str] = None
+    judge_scores: Dict[str, Any] = Field(default_factory=dict)
+    groundedness_score: Optional[float] = None
+    prev_hash: Optional[str] = None
+    event_hash: Optional[str] = None
+    chain_index: Optional[int] = None
+    purged_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 

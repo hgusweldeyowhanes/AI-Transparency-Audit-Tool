@@ -2,12 +2,17 @@ import type {
   AuditEvent,
   DriftResponse,
   FailuresResponse,
+  Incident,
+  IntegrityResponse,
   MetricsResponse,
   ModelRow,
   OversightResponse,
   OversightReview,
+  RegistryModel,
+  RegistryPrompt,
   ReportResponse,
   ReviewDecision,
+  Rubric,
 } from "./types";
 
 export const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -63,4 +68,23 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  integrity: () => request<IntegrityResponse>("/v1/integrity/verify"),
+  retention: (retention_days?: number) =>
+    request<{ purged: number; retention_days: number; note: string; cutoff: string }>(
+      `/v1/admin/retention/run${retention_days != null ? `?retention_days=${retention_days}` : ""}`,
+      { method: "POST" },
+    ),
+  rubrics: () => request<{ rubrics: Rubric[] }>("/v1/rubrics"),
+  models: () => request<{ models: RegistryModel[] }>("/v1/registry/models"),
+  prompts: () => request<{ prompts: RegistryPrompt[] }>("/v1/registry/prompts"),
+  saveModel: (body: Partial<RegistryModel> & { name: string }) =>
+    request<RegistryModel>("/v1/registry/models", { method: "POST", body: JSON.stringify(body) }),
+  savePrompt: (body: Partial<RegistryPrompt> & { version: string }) =>
+    request<RegistryPrompt>("/v1/registry/prompts", { method: "POST", body: JSON.stringify(body) }),
+  incidents: (status?: string) =>
+    request<{ incidents: Incident[] }>(`/v1/incidents${status ? `?status=${status}` : ""}`),
+  createIncident: (body: Partial<Incident> & { title: string }) =>
+    request<Incident>("/v1/incidents", { method: "POST", body: JSON.stringify(body) }),
+  patchIncident: (id: string, body: Partial<Incident>) =>
+    request<Incident>(`/v1/incidents/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
 };

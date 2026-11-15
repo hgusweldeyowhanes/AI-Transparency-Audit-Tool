@@ -1,6 +1,19 @@
 from fastapi import FastAPI
 
-from . import compare, drift, events, failures, metrics, oversight, reports, trial
+from . import (
+    compare,
+    drift,
+    events,
+    failures,
+    incidents,
+    integrity,
+    metrics,
+    oversight,
+    registry,
+    reports,
+    rubrics,
+    trial,
+)
 
 ROUTERS = (
     events.router,
@@ -11,6 +24,10 @@ ROUTERS = (
     oversight.router,
     reports.router,
     trial.router,
+    integrity.router,
+    rubrics.router,
+    registry.router,
+    incidents.router,
 )
 
 

@@ -12,17 +12,20 @@ This repository is a **self-hosted MVP**. Managed cloud, SSO, and billing are ou
 
 Organizations shipping LLMs cannot easily show regulators (EU AI Act, SEC-style disclosure) that systems are logged, reviewable, and stable. Secondary pain: no standard way to debug why outputs changed, 200+ hour audits, silent quality decay, and no cost-vs-quality comparison on *your* traffic.
 
-## Features (this MVP)
+## Features
 
 - Ingest API + Python SDK (~15 minutes to wrap a call)
 - Searchable event ledger (prompt, completion, model, tokens, cost, `prompt_version`)
-- Heuristic failure flags: empty, refusal, knowledge gap, ungrounded citation, PII-like strings, latency/length anomalies
+- **Versioned rubrics** + **groundedness** scoring against prompt / retrieved `sources`
+- Heuristic + rubric flags: empty, refusal, knowledge gap, ungrounded citation, ungrounded claims, PII-like strings, latency/length anomalies
+- **Hash-chained** events (`prev_hash` / `event_hash`) with integrity verify
+- **Retention soft-purge** (redact payloads, keep digests)
 - Drift: last 7 days vs prior 7, plus factual-error incidents
-- Failure clustering
-- Model compare (cost, quality, latency)
+- **Prompt / model registry** with approve / deprecate
+- **Incident workflow** (open → investigating → resolved) with RCA
+- Failure clustering, model compare, human oversight queue
 - EU AI Act logging pack and SEC disclosure pack (HTML + JSON)
-- Marketing site: landing, pricing, ROI calculator, docs, blog, resources, trial form
-- Seeded demo (~520 support-summarization events, including a prompt-v2 regression)
+- Marketing site + seeded demo (~520 events, prompt-v2 regression)
 
 ## Quick start
 
@@ -91,6 +94,12 @@ with client.trace(model="gpt-4o", prompt=user_msg, tags=["support"]) as span:
 | GET | `/v1/compare` | Models |
 | GET | `/v1/reports/eu-ai-act?format=html` | Logging pack |
 | GET | `/v1/reports/sec?format=html` | Disclosure pack |
+| GET | `/v1/integrity/verify` | Hash-chain check |
+| POST | `/v1/admin/retention/run` | Soft-purge old payloads |
+| GET | `/v1/rubrics` | Versioned judge rubrics |
+| GET/POST | `/v1/registry/models` | Model registry |
+| GET/POST | `/v1/registry/prompts` | Prompt registry |
+| GET/POST/PATCH | `/v1/incidents` | Incident workflow |
 | POST | `/v1/trial` | Capture email → demo key |
 
 ## Pricing (from the GTM)

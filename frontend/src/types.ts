@@ -18,6 +18,13 @@ export type AuditEvent = {
   metadata: Record<string, unknown>;
   failure_flags: string[];
   quality_score: number;
+  judge_rubric_version?: string | null;
+  judge_scores?: Record<string, unknown>;
+  groundedness_score?: number | null;
+  prev_hash?: string | null;
+  event_hash?: string | null;
+  chain_index?: number | null;
+  purged_at?: string | null;
 };
 
 export type SeriesPoint = {
@@ -140,6 +147,7 @@ export const MODELS = ["gpt-4o", "claude-3-5-sonnet", "llama-3.1-70b"] as const;
 
 export const FLAGS = [
   "factual_error",
+  "ungrounded",
   "empty",
   "refusal",
   "knowledge_gap",
@@ -148,3 +156,62 @@ export const FLAGS = [
   "latency_anomaly",
   "truncated",
 ] as const;
+
+export type IntegrityResponse = {
+  ok: boolean;
+  checked: number;
+  unsealed: number;
+  redacted?: number;
+  tip_hash: string;
+  tip_index: number;
+  broken_at: Record<string, unknown> | null;
+  genesis: string;
+};
+
+export type Rubric = {
+  id: string;
+  name: string;
+  version: string;
+  description?: string | null;
+  active: boolean;
+  weights: Record<string, number>;
+  rules: string[];
+  min_groundedness: number;
+};
+
+export type RegistryModel = {
+  id: string;
+  name: string;
+  provider: string;
+  status: string;
+  owner?: string | null;
+  notes?: string | null;
+};
+
+export type RegistryPrompt = {
+  id: string;
+  version: string;
+  model?: string | null;
+  status: string;
+  owner?: string | null;
+  notes?: string | null;
+  content: string;
+  content_hash?: string | null;
+  approved_at?: string | null;
+};
+
+export type Incident = {
+  id: string;
+  title: string;
+  severity: string;
+  status: string;
+  owner: string;
+  metric?: string | null;
+  detail: string;
+  rca: string;
+  linked_event_ids: string[];
+  prompt_version?: string | null;
+  created_at: string;
+  updated_at: string;
+  resolved_at?: string | null;
+};

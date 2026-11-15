@@ -6,6 +6,9 @@ const links = [
   ["Drift", "/app/drift"],
   ["Failures", "/app/failures"],
   ["Oversight", "/app/oversight"],
+  ["Incidents", "/app/incidents"],
+  ["Registry", "/app/registry"],
+  ["Integrity", "/app/integrity"],
   ["Compare", "/app/compare"],
   ["Reports", "/app/reports"],
 ];

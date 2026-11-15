@@ -15,8 +15,11 @@ from sqlalchemy.orm import Session
 from .clock import utc_now
 from .models import AuditEvent
 from .repositories import EventStore
+from .services.chain import backfill_chain, seal_event
 from .services.cost import estimate_cost, infer_provider
-from .services.detectors import detect_flags
+from .services.incidents import seed_demo_incident
+from .services.judge import active_rubric, ensure_default_rubric, score_event
+from .services.registry import seed_registry
 
 TICKETS = [
     (
@@ -92,9 +95,20 @@ def _pick_model(rng):
     return MODELS[-1][0]
 
 
+def seed_advanced_catalog(db: Session) -> None:
+    ensure_default_rubric(db)
+    seed_registry(db)
+    seed_demo_incident(db)
+
+
 def seed_if_empty(db: Session, n=520):
+    seed_advanced_catalog(db)
     existing = EventStore(db).count()
     if existing:
+        # Upgrade path for MVP databases created before the hash chain.
+        sealed = db.query(AuditEvent).filter(AuditEvent.event_hash.is_(None)).count()
+        if sealed:
+            backfill_chain(db)
         return existing
 
     rng = random.Random(42)
@@ -103,19 +117,17 @@ def seed_if_empty(db: Session, n=520):
         "You summarize bank customer-support tickets for an internal ops console. "
         "Stay faithful to the ticket. Never invent policy IDs."
     )
+    rubric = active_rubric(db)
 
     for i in range(n):
         day_offset = rng.randint(0, 29)
         ts = now - timedelta(days=day_offset, hours=rng.randint(0, 23), minutes=rng.randint(0, 59))
-        # Map "days ago" so ~18 days ago is the incident start
         days_ago = (now - ts).days
 
         if 18 <= days_ago <= 22:
             prompt_version = "v2"
-        elif days_ago >= 23:
-            prompt_version = "v1"
         else:
-            prompt_version = "v1" if rng.random() > 0.08 else "v1"
+            prompt_version = "v1"
 
         model = _pick_model(rng)
         ticket, good = rng.choice(TICKETS)
@@ -160,9 +172,11 @@ def seed_if_empty(db: Session, n=520):
             latency = 8500 + rng.randint(0, 2000)
             completion_tokens = 500 + rng.randint(0, 200)
 
-        flags, score = detect_flags(
+        flags, score, judge_scores, groundedness = score_event(
             prompt,
             completion,
+            rubric=rubric,
+            sources=[ticket],
             latency_ms=latency,
             completion_tokens=completion_tokens,
             baseline_latency_ms=700,
@@ -186,11 +200,21 @@ def seed_if_empty(db: Session, n=520):
             user_id="agent-" + str(rng.randint(1, 24)),
             session_id="sess-" + str(rng.randint(1000, 9999)),
             tags=["customer-support", "summarization"],
-            extra_metadata={"channel": "ops-console", "seeded": True},
+            extra_metadata={
+                "channel": "ops-console",
+                "seeded": True,
+                "sources": [ticket],
+                "judge": {"rubric_id": rubric.id, "rubric_version": rubric.version},
+            },
             failure_flags=flags,
             quality_score=score,
+            judge_rubric_version=rubric.version,
+            judge_scores=judge_scores,
+            groundedness_score=groundedness,
         )
         db.add(row)
+        db.flush()
+        seal_event(db, row)
 
     db.commit()
     return n

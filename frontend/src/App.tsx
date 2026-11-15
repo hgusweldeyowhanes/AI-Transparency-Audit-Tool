@@ -16,6 +16,9 @@ import FailuresPage from "./pages/app/Failures";
 import ComparePage from "./pages/app/Compare";
 import OversightPage from "./pages/app/Oversight";
 import ReportsPage from "./pages/app/Reports";
+import IntegrityPage from "./pages/app/Integrity";
+import RegistryPage from "./pages/app/Registry";
+import IncidentsPage from "./pages/app/Incidents";
 
 export default function App() {
   return (
@@ -36,6 +39,9 @@ export default function App() {
         <Route path="drift" element={<DriftPage />} />
         <Route path="failures" element={<FailuresPage />} />
         <Route path="oversight" element={<OversightPage />} />
+        <Route path="incidents" element={<IncidentsPage />} />
+        <Route path="registry" element={<RegistryPage />} />
+        <Route path="integrity" element={<IntegrityPage />} />
         <Route path="compare" element={<ComparePage />} />
         <Route path="reports" element={<ReportsPage />} />
       </Route>

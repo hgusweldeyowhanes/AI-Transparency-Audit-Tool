@@ -45,7 +45,11 @@ export default function Dashboard() {
             <p style={{ marginTop: 22 }}>
               <Link to="/app/oversight">Review flagged decisions →</Link>
               <span className="muted"> · </span>
-              <Link to="/app/drift">Inspect drift incidents →</Link>
+              <Link to="/app/incidents">Incident workflow →</Link>
+              <span className="muted"> · </span>
+              <Link to="/app/integrity">Verify hash chain →</Link>
+              <span className="muted"> · </span>
+              <Link to="/app/registry">Prompt registry →</Link>
             </p>
           </>
         )}

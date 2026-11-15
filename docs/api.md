@@ -23,11 +23,12 @@ Reads (search, metrics, reports) are open in this MVP so the demo dashboard work
   "user_id": "agent-1",
   "session_id": "sess-1",
   "tags": ["customer-support"],
-  "metadata": { "channel": "ops" }
+  "metadata": { "channel": "ops" },
+  "sources": ["retrieved doc snippet used for grounding"]
 }
 ```
 
-`cost_usd` is estimated from public list prices when omitted. On ingest, heuristic detectors attach `failure_flags` and `quality_score`.
+`cost_usd` is estimated from public list prices when omitted. On ingest, the versioned rubric + groundedness judge attach `failure_flags`, `quality_score`, `judge_scores`, `groundedness_score`, and seal `event_hash` into the append-only chain.
 
 ## Endpoints
 
@@ -39,6 +40,13 @@ Reads (search, metrics, reports) are open in this MVP so the demo dashboard work
 - `GET /v1/drift`
 - `GET /v1/failures?limit=40`
 - `GET /v1/compare?days=30`
+- `GET /v1/integrity/verify` — hash-chain status
+- `POST /v1/admin/retention/run?retention_days=30` — soft-purge
+- `GET /v1/rubrics`
+- `GET/POST /v1/registry/models`
+- `GET/POST /v1/registry/prompts`
+- `GET/POST /v1/incidents`
+- `PATCH /v1/incidents/{id}`
 - `GET /v1/reports/eu-ai-act?format=json|html`
 - `GET /v1/reports/sec?format=json|html`
 - `POST /v1/trial` — `{ "email", "company", "use_case" }`
